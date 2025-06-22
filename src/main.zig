@@ -1,23 +1,24 @@
-//! By convention, main.zig is where your main function lives in the case that
-//! you are building an executable. If you are making a library, the convention
-//! is to delete this file and start with root.zig instead.
-
 const rl = @import("raylib");
-pub fn main() !void {
-    const screenWidth: i32 = 800;
-    const screenHeight: i32 = 450;
+const std = @import("std");
+const rc = @import("cube/rubikCube.zig");
+const N = 3;
 
-    rl.initWindow(screenWidth, screenHeight, "testes");
+pub fn main() !void {
+    const alloc = std.heap.c_allocator;
+    const screenWidth: i32 = 640;
+    const screenHeight: i32 = 640;
+
+    rl.initWindow(screenWidth, screenHeight, "rubik - Zig + raylib example");
     defer rl.closeWindow(); // Close window and OpenGL context
 
     rl.setTargetFPS(30); // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
-
+    var cube = try rc.Init(alloc, 3);
+    // defer cube.deinit(); // Deinitialize the cube when done
+    // std.debug.print("Test {any}\n", .{cube});
     // Main game loop
     while (!rl.windowShouldClose()) { // Detect window close button or ESC key
 
-        const center_x: i32 = screenWidth / 2;
-        const center_y: i32 = screenHeight / 2;
         // Update
         //----------------------------------------------------------------------------------
         // TODO: Update your variables here
@@ -27,8 +28,9 @@ pub fn main() !void {
         //----------------------------------------------------------------------------------
         rl.beginDrawing();
         defer rl.endDrawing();
-        rl.clearBackground(.blue);
-        rl.drawCircle(center_x, center_y, 50, .green);
+        rl.clearBackground(.gray);
+        cube.rotate();
+        try cube.draw2d();
     }
 }
 
