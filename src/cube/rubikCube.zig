@@ -47,7 +47,8 @@ pub fn Init(allocator: std.mem.Allocator, size: usize) !RubikCube {
         .alloc = allocator,
         .size = size,
         .cube = try std.ArrayList([]CubeColor).initCapacity(allocator, 6),
-        .neighbors = try allocator.alloc(Neighbors, 4),
+        // 6 faces com 4 vizinhos
+        .neighbors = try allocator.alloc(Neighbors, 6 * 4),
     };
     const l = @typeInfo(CubeColor).@"enum".fields.len;
     for (0..l) |i| {
@@ -64,40 +65,23 @@ pub fn Init(allocator: std.mem.Allocator, size: usize) !RubikCube {
         .startIndex = 0,
         .step = 0,
     });
+    // apenas os vizinhos do branco
     c.neighbors[0] = Neighbors.new(.Red, 0, N);
     c.neighbors[1] = Neighbors.new(.Blue, 0, N);
     c.neighbors[2] = Neighbors.new(.Orange, 0, N);
     c.neighbors[3] = Neighbors.new(.Green, N * N - 1, -N);
-    //
-    // vizinhos[4] = L.Node{ .data = Neighbors.new(.Red, 0, N) };
-    // vizinhos[5] = L.Node{ .data = Neighbors.new(.Blue, 0, N) };
-    // vizinhos[6] = L.Node{ .data = Neighbors.new(.Orange, 0, N) };
-    // vizinhos[7] = L.Node{ .data = Neighbors.new(.Green, N * N - 1, -N) };
-    // try c.neighbors.append(Neighbors.new(.Red, N * (N - 1), 1));
-    // try c.neighbors.append(Neighbors.new(.Yellow, 0, N));
-    // try c.neighbors.append(Neighbors.new(.Orange, N - 1, N));
-    // try c.neighbors.append(Neighbors.new(.White, N * N - 1, -N));
-
-    // var right = L.Node{ .data = Neighbors.new(.Blue, 0, N) };
-    // var bottom = L.Node{ .data = Neighbors.new(.Orange, N * N - 1, -N) };
-    // var left = L.Node{ .data = Neighbors.new(.Green, N * N - 1, -N) };
-    // list1.append(top2);
-    // list1.append(&right);
-    // list1.append(&bottom);
-    // list1.append(&left);
-    // std.debug.print("top: {any}", .{top2.data});
-
-    // // Neighbors for the blue
+    // restantes ainda pendentes
 
     return c;
 }
 pub fn getNeighbors(self: *RubikCube, face: CubeColor) ![]Neighbors {
-    const index = @intFromEnum(face) * 4;
+    const neighborStartIndex: usize = @intFromEnum(face) * 4;
+    const index = neighborStartIndex;
     if (index >= self.neighbors.len) {
         return error.OutOfRange;
     }
     //monipular aqui
-    return self.neighbors[@intFromEnum(face) * 4 .. @intFromEnum(face) * 4 + 4];
+    return self.neighbors[neighborStartIndex .. neighborStartIndex + 4];
 }
 pub fn deinit(self: *RubikCube) void {
     if (self.cube) |c| {
@@ -137,12 +121,10 @@ pub fn draw2d(self: RubikCube) !void {
     }
 }
 pub fn processInput(self: *RubikCube) !void {
-    // falta criar número a partir de sequência de teclas? talvez desnecessário!
     const clockwise: bool = !rl.isKeyDown(rl.KeyboardKey.left_shift);
     var key: rl.KeyboardKey = rl.getKeyPressed();
-    // std.debug.print("Press any key to rotate the cube, or ESC to exit...\n", .{});
+    // apenas face branca implementada
     while (key != .null) : (key = rl.getKeyPressed()) {
-        // std.debug.print("key :{}, {}\n", .{ key, clockwise });
         switch (key) {
             // .r => self.faceRotate(.Blue, clockwise),
             // .l => self.faceRotate(.Green, clockwise),
@@ -161,20 +143,18 @@ pub fn processInput(self: *RubikCube) !void {
     }
 }
 
+// rotaciona a face
 fn faceRotate(self: *RubikCube, face: CubeColor, clockwise: bool) !void {
-    // Implement the rotation logic for the specified face
     std.debug.print("Rotating face: {}, {}, {}\n", .{ face, clockwise, @intFromEnum(face) });
     const cf = self.cube.items[@intFromEnum(face)];
-    // for (0..cf.len) |i| {
-    //     cf[i] = @enumFromInt(i % 6);
-    // }
     const buffer: []CubeColor = self.alloc.dupe(CubeColor, cf) catch |err| {
         std.debug.print("Error duplicating face: {}\n", .{err});
         return;
     };
     defer self.alloc.free(buffer);
     const N = self.size;
-    if (clockwise) { // Rotate clockwise
+    if (clockwise) {
+        // Rotate clockwise
         for (0..N) |i| {
             for (0..N) |j| {
                 const new_i = j;
@@ -192,6 +172,7 @@ fn faceRotate(self: *RubikCube, face: CubeColor, clockwise: bool) !void {
             }
         }
     }
+    //todo: melhorar tratamento de erros
     const neighbors: []Neighbors = try self.getNeighbors(face);
     if (neighbors.len == 0) {
         std.debug.print("No neighbors found for face: {}\n", .{face});
@@ -210,7 +191,7 @@ fn faceRotate(self: *RubikCube, face: CubeColor, clockwise: bool) !void {
     var it: ?*L.Node = list.first;
     var i: usize = 0;
     while (it) |node| : (i += 1) {
-        if (i >= neighbors.len) break; // Prevent loop
+        if (i >= neighbors.len - 1) break; // Prevent loop
         var next: ?*L.Node = undefined;
         if (clockwise) {
             try self.swapNeighbor(&node.data, &node.next.?.data);
@@ -222,6 +203,7 @@ fn faceRotate(self: *RubikCube, face: CubeColor, clockwise: bool) !void {
         it = next;
     }
 }
+//rotaciona os vizinhos
 fn swapNeighbor(self: *RubikCube, n1: *Neighbors, n2: *Neighbors) !void {
     const buffer: []CubeColor = try self.alloc.alloc(CubeColor, self.size);
     defer self.alloc.free(buffer);
@@ -230,6 +212,13 @@ fn swapNeighbor(self: *RubikCube, n1: *Neighbors, n2: *Neighbors) !void {
         const oi: usize = @intCast(@as(i64, @intCast(i)) * n1.step + n1.startIndex);
         buffer[i] = self.cube.items[n1.getIndex()][oi];
     }
-    std.debug.print("n1 {any} e n2 {any}\n", .{ n1.color, n2.color });
-    std.debug.print("array {any}\n", .{buffer});
+    for (0..self.size) |i| {
+        const oi: usize = @intCast(@as(i64, @intCast(i)) * n1.step + n1.startIndex);
+        const di: usize = @intCast(@as(i64, @intCast(i)) * n2.step + n2.startIndex);
+        self.cube.items[n1.getIndex()][oi] = self.cube.items[n2.getIndex()][di];
+    }
+    for (0..self.size) |i| {
+        const di: usize = @intCast(@as(i64, @intCast(i)) * n2.step + n2.startIndex);
+        self.cube.items[n2.getIndex()][di] = buffer[i];
+    }
 }
