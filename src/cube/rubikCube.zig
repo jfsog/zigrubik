@@ -208,19 +208,6 @@ fn swapNeighbor(self: *RubikCube, n1: *Neighbors, n2: *Neighbors) !void {
     const buffer: []CubeColor = try self.alloc.alloc(CubeColor, self.size);
     defer self.alloc.free(buffer);
 
-    // for (0..self.size) |i| {
-    //     const oi: usize = @intCast(@as(i64, @intCast(i)) * n1.step + n1.startIndex);
-    //     buffer[i] = self.cube.items[n1.getIndex()][oi];
-    // }
-    // for (0..self.size) |i| {
-    //     const oi: usize = @intCast(@as(i64, @intCast(i)) * n1.step + n1.startIndex);
-    //     const di: usize = @intCast(@as(i64, @intCast(i)) * n2.step + n2.startIndex);
-        // self.cube.items[n1.getIndex()][oi] = self.cube.items[n2.getIndex()][di];
-    // }
-    // for (0..self.size) |i| {
-    //     const di: usize = @intCast(@as(i64, @intCast(i)) * n2.step + n2.startIndex);
-    //     self.cube.items[n2.getIndex()][di] = buffer[i];
-    // }
     for (0..self.size) |i| {
         const di: usize = @intCast(@as(i64, @intCast(i)) * n2.step + n2.startIndex);
         const oi: usize = @intCast(@as(i64, @intCast(i)) * n1.step + n1.startIndex);
