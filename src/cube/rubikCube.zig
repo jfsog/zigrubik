@@ -25,8 +25,8 @@ const CubeColor = enum(u3) {
     Blue = 1,
     Yellow = 2,
     Green = 3,
-    Red = 4,
-    Orange = 5,
+    Orange = 4,
+    Red = 5,
     pub fn getColor(self: CubeColor) rl.Color {
         return switch (self) {
             .White => .white,
@@ -70,7 +70,7 @@ pub fn Init(allocator: std.mem.Allocator, size: usize) !RubikCube {
     c.neighbors[1] = Neighbors.new(.Blue, 0, N);
     c.neighbors[2] = Neighbors.new(.Orange, 0, N);
     c.neighbors[3] = Neighbors.new(.Green, N * N - 1, -N);
-    // restantes ainda pendentes
+
 
     return c;
 }
