@@ -65,19 +65,23 @@ pub fn Init(allocator: std.mem.Allocator, size: usize) !RubikCube {
         .startIndex = 0,
         .step = 0,
     });
-    // apenas os vizinhos do branco
-    c.neighbors[0] = Neighbors.new(.Red, 0, N);
+    // vizinhos do branco
+    c.neighbors[0] = Neighbors.new(.Orange, 0, N);
     c.neighbors[1] = Neighbors.new(.Blue, 0, N);
-    c.neighbors[2] = Neighbors.new(.Orange, 0, N);
+    c.neighbors[2] = Neighbors.new(.Red, 0, N);
     c.neighbors[3] = Neighbors.new(.Green, N * N - 1, -N);
+    // vizinhos do azul
+    c.neighbors[4] = Neighbors.new(.Orange, N * (N - 1), 1);
+    c.neighbors[5] = Neighbors.new(.Yellow, 0, N);
+    c.neighbors[6] = Neighbors.new(.Red, N - 1, -1);
+    c.neighbors[7] = Neighbors.new(.White, N * N - 1, -N);
 
 
     return c;
 }
 pub fn getNeighbors(self: *RubikCube, face: CubeColor) ![]Neighbors {
     const neighborStartIndex: usize = @intFromEnum(face) * 4;
-    const index = neighborStartIndex;
-    if (index >= self.neighbors.len) {
+    if (neighborStartIndex >= self.neighbors.len) {
         return error.OutOfRange;
     }
     //monipular aqui
@@ -126,9 +130,9 @@ pub fn processInput(self: *RubikCube) !void {
     // apenas face branca implementada
     while (key != .null) : (key = rl.getKeyPressed()) {
         switch (key) {
-            // .r => self.faceRotate(.Blue, clockwise),
+            .f => try self.faceRotate(.Blue, clockwise),
             // .l => self.faceRotate(.Green, clockwise),
-            .f => try self.faceRotate(.White, clockwise),
+            .r => try self.faceRotate(.White, clockwise),
             // .b => self.faceRotate(.Yellow, clockwise),
             // .u => self.faceRotate(.Orange, clockwise),
             // .d => self.faceRotate(.Red, clockwise),
