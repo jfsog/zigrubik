@@ -85,12 +85,22 @@ pub fn Init(allocator: std.mem.Allocator, size: usize) !RubikCube {
     c.neighbors[13] = Neighbors.new(.White, 0, N);
     c.neighbors[14] = Neighbors.new(.Red, N * (N - 1), 1);
     c.neighbors[15] = Neighbors.new(.Yellow, N * N - 1, -N);
+    // vizinhos do laranja
+    c.neighbors[16] = Neighbors.new(.Green, N - 1, -1);
+    c.neighbors[17] = Neighbors.new(.Yellow, N - 1, -1);
+    c.neighbors[18] = Neighbors.new(.Blue, N - 1, -1);
+    c.neighbors[19] = Neighbors.new(.White, N - 1, -1);
+    // vizinhos do vermelho
+    c.neighbors[20] = Neighbors.new(.Blue, N * (N - 1), 1);
+    c.neighbors[21] = Neighbors.new(.Yellow, N * (N - 1), 1);
+    c.neighbors[22] = Neighbors.new(.Green, N * (N - 1), 1);
+    c.neighbors[23] = Neighbors.new(.White, N * (N - 1), 1);
 
     return c;
 }
 pub fn getNeighbors(self: *RubikCube, face: CubeColor) []Neighbors {
     const neighborStartIndex: usize = @as(usize, @intFromEnum(face)) * 4;
-    std.debug.assert(neighborStartIndex + 4 < self.neighbors.len);
+    std.debug.assert(neighborStartIndex + 4 <= self.neighbors.len);
     return self.neighbors[neighborStartIndex .. neighborStartIndex + 4];
 }
 pub fn deinit(self: *RubikCube) void {
@@ -140,8 +150,9 @@ pub fn processInput(self: *RubikCube) !void {
             .f => try self.faceRotate(.Blue, clockwise),
             .r => try self.faceRotate(.Yellow, clockwise),
             .b => try self.faceRotate(.Green, clockwise),
-            // .u => self.faceRotate(.Orange, clockwise),
-            // .d => self.faceRotate(.Red, clockwise),
+            .u => try self.faceRotate(.Orange, clockwise),
+            .d => try self.faceRotate(.Red, clockwise),
+            //todo implementar rotações centrais
             .h => {},
             .v => {},
             .s => {},
