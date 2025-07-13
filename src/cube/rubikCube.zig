@@ -75,16 +75,22 @@ pub fn Init(allocator: std.mem.Allocator, size: usize) !RubikCube {
     c.neighbors[5] = Neighbors.new(.Yellow, 0, N);
     c.neighbors[6] = Neighbors.new(.Red, N - 1, -1);
     c.neighbors[7] = Neighbors.new(.White, N * N - 1, -N);
-
+    // vizinhos do amarelo
+    c.neighbors[8] = Neighbors.new(.Orange, N * N - 1, -N);
+    c.neighbors[9] = Neighbors.new(.Green, 0, N);
+    c.neighbors[10] = Neighbors.new(.Red, N * N - 1, -N);
+    c.neighbors[11] = Neighbors.new(.Blue, N * N - 1, -N);
+    // vizinhos do verde
+    c.neighbors[12] = Neighbors.new(.Orange, N - 1, -1);
+    c.neighbors[13] = Neighbors.new(.White, 0, N);
+    c.neighbors[14] = Neighbors.new(.Red, N * (N - 1), 1);
+    c.neighbors[15] = Neighbors.new(.Yellow, N * N - 1, -N);
 
     return c;
 }
-pub fn getNeighbors(self: *RubikCube, face: CubeColor) ![]Neighbors {
-    const neighborStartIndex: usize = @intFromEnum(face) * 4;
-    if (neighborStartIndex >= self.neighbors.len) {
-        return error.OutOfRange;
-    }
-    //monipular aqui
+pub fn getNeighbors(self: *RubikCube, face: CubeColor) []Neighbors {
+    const neighborStartIndex: usize = @as(usize, @intFromEnum(face)) * 4;
+    std.debug.assert(neighborStartIndex + 4 < self.neighbors.len);
     return self.neighbors[neighborStartIndex .. neighborStartIndex + 4];
 }
 pub fn deinit(self: *RubikCube) void {
@@ -130,10 +136,10 @@ pub fn processInput(self: *RubikCube) !void {
     // apenas face branca implementada
     while (key != .null) : (key = rl.getKeyPressed()) {
         switch (key) {
+            .l => try self.faceRotate(.White, clockwise),
             .f => try self.faceRotate(.Blue, clockwise),
-            // .l => self.faceRotate(.Green, clockwise),
-            .r => try self.faceRotate(.White, clockwise),
-            // .b => self.faceRotate(.Yellow, clockwise),
+            .r => try self.faceRotate(.Yellow, clockwise),
+            .b => try self.faceRotate(.Green, clockwise),
             // .u => self.faceRotate(.Orange, clockwise),
             // .d => self.faceRotate(.Red, clockwise),
             .h => {},
@@ -149,12 +155,8 @@ pub fn processInput(self: *RubikCube) !void {
 
 // rotaciona a face
 fn faceRotate(self: *RubikCube, face: CubeColor, clockwise: bool) !void {
-    std.debug.print("Rotating face: {}, {}, {}\n", .{ face, clockwise, @intFromEnum(face) });
     const cf = self.cube.items[@intFromEnum(face)];
-    const buffer: []CubeColor = self.alloc.dupe(CubeColor, cf) catch |err| {
-        std.debug.print("Error duplicating face: {}\n", .{err});
-        return;
-    };
+    const buffer: []CubeColor = try self.alloc.dupe(CubeColor, cf);
     defer self.alloc.free(buffer);
     const N = self.size;
     if (clockwise) {
@@ -176,35 +178,20 @@ fn faceRotate(self: *RubikCube, face: CubeColor, clockwise: bool) !void {
             }
         }
     }
-    //todo: melhorar tratamento de erros
-    const neighbors: []Neighbors = try self.getNeighbors(face);
-    if (neighbors.len == 0) {
-        std.debug.print("No neighbors found for face: {}\n", .{face});
-        return;
-    }
-    const L = std.DoublyLinkedList(Neighbors);
-    var list = L{};
-    var lnode: []L.Node = try self.alloc.alloc(L.Node, neighbors.len);
-    defer self.alloc.free(lnode);
-    for (0..neighbors.len) |i| {
-        lnode[i] = L.Node{ .data = neighbors[i] };
-        list.append(&lnode[i]);
-    }
-    list.first.?.prev = list.last.?;
-    list.last.?.next = list.first.?; // Make it circular
-    var it: ?*L.Node = list.first;
-    var i: usize = 0;
-    while (it) |node| : (i += 1) {
-        if (i >= neighbors.len - 1) break; // Prevent loop
-        var next: ?*L.Node = undefined;
-        if (clockwise) {
-            try self.swapNeighbor(&node.data, &node.next.?.data);
-            next = it.?.prev;
-        } else {
-            try self.swapNeighbor(&node.data, &node.prev.?.data);
-            next = it.?.next;
-        }
-        it = next;
+    try self.rotateNeighbors(face, clockwise);
+}
+fn rotateNeighbors(self: *RubikCube, face: CubeColor, clockwise: bool) !void {
+    const neighbors: []Neighbors = self.getNeighbors(face);
+    // assegura que cada face tem 4 vizinhos
+    std.debug.assert(neighbors.len == 4);
+    if (clockwise) {
+        try self.swapNeighbor(&neighbors[0], &neighbors[3]);
+        try self.swapNeighbor(&neighbors[3], &neighbors[2]);
+        try self.swapNeighbor(&neighbors[2], &neighbors[1]);
+    } else {
+        try self.swapNeighbor(&neighbors[0], &neighbors[1]);
+        try self.swapNeighbor(&neighbors[1], &neighbors[2]);
+        try self.swapNeighbor(&neighbors[2], &neighbors[3]);
     }
 }
 //rotaciona os vizinhos
