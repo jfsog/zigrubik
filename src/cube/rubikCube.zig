@@ -207,14 +207,13 @@ fn rotateNeighbors(self: *RubikCube, face: CubeColor, clockwise: bool) !void {
 }
 //rotaciona os vizinhos
 fn swapNeighbor(self: *RubikCube, n1: *Neighbors, n2: *Neighbors) !void {
-    const buffer: []CubeColor = try self.alloc.alloc(CubeColor, self.size);
-    defer self.alloc.free(buffer);
+    var temp: CubeColor = undefined;
 
     for (0..self.size) |i| {
         const di: usize = @intCast(@as(i64, @intCast(i)) * n2.step + n2.startIndex);
         const oi: usize = @intCast(@as(i64, @intCast(i)) * n1.step + n1.startIndex);
-        buffer[i] = self.cube.items[n1.getIndex()][oi];
+        temp = self.cube.items[n1.getIndex()][oi];
         self.cube.items[n1.getIndex()][oi] = self.cube.items[n2.getIndex()][di];
-        self.cube.items[n2.getIndex()][di] = buffer[i];
+        self.cube.items[n2.getIndex()][di] = temp;
     }
 }
