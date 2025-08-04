@@ -156,7 +156,7 @@ pub fn processInput(self: *RubikCube) !void {
             .d => try self.faceRotate(.Red, clockwise),
             //todo implementar rotações centrais
             .h => try self.rotateHorizontalMiddleLayer(clockwise, 1),
-            .v => try self.rotateVerticallMiddleLayer(clockwise, 1),
+            .v => try self.rotateVerticalMiddleLayer(clockwise, 1),
             .s => {},
             // numeric keys to implement middle layer rotations
             .zero, .one, .two, .three, .four, .five, .six, .seven, .eight, .nine => {},
@@ -209,7 +209,7 @@ fn rotateHorizontalMiddleLayer(self: *RubikCube, clockwise: bool, deslocation: u
     try self.rotateLayers(&middleLayers, clockwise);
 }
 
-fn rotateVerticallMiddleLayer(self: *RubikCube, clockwise: bool, deslocation: usize) !void {
+fn rotateVerticalMiddleLayer(self: *RubikCube, clockwise: bool, deslocation: usize) !void {
     if (self.size <= 2) {
         return;
     }
