@@ -157,7 +157,7 @@ pub fn processInput(self: *RubikCube) !void {
             //todo implementar rotações centrais
             .h => try self.rotateHorizontalMiddleLayer(clockwise, 1),
             .v => try self.rotateVerticalMiddleLayer(clockwise, 1),
-            .s => {},
+            .s => try self.rotateSideMiddleLayer(clockwise, 99),
             // numeric keys to implement middle layer rotations
             .zero, .one, .two, .three, .four, .five, .six, .seven, .eight, .nine => {},
             .kp_0, .kp_1, .kp_2, .kp_3, .kp_4, .kp_5, .kp_6, .kp_7, .kp_8, .kp_9 => {},
@@ -204,6 +204,7 @@ fn rotateHorizontalMiddleLayer(self: *RubikCube, clockwise: bool, deslocation: u
     const sIndex: i64 = @intCast(middleLayer * self.size);
     var middleLayers: [4]Neighbors = undefined;
     inline for (&.{ .White, .Blue, .Yellow, .Green }, 0..) |color, i| {
+        //camadas centrais laterais (em relação à camada laranja)
         middleLayers[i] = Neighbors.new(color, sIndex, 1);
     }
     try self.rotateLayers(&middleLayers, clockwise);
@@ -215,7 +216,29 @@ fn rotateVerticalMiddleLayer(self: *RubikCube, clockwise: bool, deslocation: usi
     }
     const sIndex: i64 = @intCast(clampMiddleLayer(self, deslocation));
     const N: i64 = @intCast(self.size);
-    var middleLayers = [_]Neighbors{ Neighbors.new(.Orange, sIndex, N), Neighbors.new(.Blue, sIndex, N), Neighbors.new(.Red, sIndex, N), Neighbors.new(.Green, N * N - sIndex - 1, -N) };
+    var middleLayers = [_]Neighbors{
+        //camadas centrais laterais (em relação à camada branca)
+        Neighbors.new(.Orange, sIndex, N),
+        Neighbors.new(.Blue, sIndex, N),
+        Neighbors.new(.Red, sIndex, N),
+        Neighbors.new(.Green, N * N - sIndex - 1, -N),
+    };
+    try self.rotateLayers(&middleLayers, clockwise);
+}
+
+fn rotateSideMiddleLayer(self: *RubikCube, clockwise: bool, deslocation: usize) !void {
+    if (self.size <= 2) {
+        return;
+    }
+    const sIndex: i64 = @intCast(clampMiddleLayer(self, deslocation));
+    const N: i64 = @intCast(self.size);
+    var middleLayers = [_]Neighbors{
+        //camadas centrais laterais (em relação à camada azul)
+        Neighbors.new(.Orange, N * N - (N * (sIndex + 1)), 1),
+        Neighbors.new(.Yellow, sIndex, N),
+        Neighbors.new(.Red, (N - 1) + (N * sIndex), -1),
+        Neighbors.new(.White, N * N - 1 - sIndex, -N),
+    };
     try self.rotateLayers(&middleLayers, clockwise);
 }
 
