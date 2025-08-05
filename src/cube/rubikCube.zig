@@ -147,32 +147,33 @@ pub fn draw2d(self: RubikCube) !void {
 pub fn processInput(self: *RubikCube) !void {
     const clockwise: bool = !rl.isKeyDown(rl.KeyboardKey.left_shift);
     var key: rl.KeyboardKey = rl.getKeyPressed();
-    // apenas face branca implementada
     while (key != .null) : (key = rl.getKeyPressed()) {
-        switch (key) {
-            .l => try self.faceRotate(.White, clockwise),
-            .f => try self.faceRotate(.Blue, clockwise),
-            .r => try self.faceRotate(.Yellow, clockwise),
-            .b => try self.faceRotate(.Green, clockwise),
-            .u => try self.faceRotate(.Orange, clockwise),
-            .d => try self.faceRotate(.Red, clockwise),
-            .h => try self.rotateHorizontalMiddleLayer(clockwise),
-            .v => try self.rotateVerticalMiddleLayer(clockwise),
-            .s => try self.rotateSideMiddleLayer(clockwise),
-            // numeric keys to implement middle layer rotations
-            .zero, .one, .two, .three, .four, .five, .six, .seven, .eight, .nine => {
-                const current: usize = @intCast(@intFromEnum(key) - @intFromEnum(rl.KeyboardKey.zero));
-                self.deslocationAcc = self.deslocationAcc *% 10 +% current;
-            },
-            .kp_0, .kp_1, .kp_2, .kp_3, .kp_4, .kp_5, .kp_6, .kp_7, .kp_8, .kp_9 => {
-                const current: usize = @intCast(@intFromEnum(key) - @intFromEnum(rl.KeyboardKey.kp_0));
-                self.deslocationAcc = self.deslocationAcc *% 10 +% current;
-            },
-            else => {},
-        }
+        try self.processKey(key, clockwise);
     }
 }
-
+fn processKey(self: *RubikCube, key: rl.KeyboardKey, clockwise: bool) !void {
+    switch (key) {
+        .l => try self.faceRotate(.White, clockwise),
+        .f => try self.faceRotate(.Blue, clockwise),
+        .r => try self.faceRotate(.Yellow, clockwise),
+        .b => try self.faceRotate(.Green, clockwise),
+        .u => try self.faceRotate(.Orange, clockwise),
+        .d => try self.faceRotate(.Red, clockwise),
+        .h => try self.rotateHorizontalMiddleLayer(clockwise),
+        .v => try self.rotateVerticalMiddleLayer(clockwise),
+        .s => try self.rotateSideMiddleLayer(clockwise),
+        // numeric keys to implement middle layer rotations
+        .zero, .one, .two, .three, .four, .five, .six, .seven, .eight, .nine => {
+            const current: usize = @intCast(@intFromEnum(key) - @intFromEnum(rl.KeyboardKey.zero));
+            self.deslocationAcc = self.deslocationAcc *% 10 +% current;
+        },
+        .kp_0, .kp_1, .kp_2, .kp_3, .kp_4, .kp_5, .kp_6, .kp_7, .kp_8, .kp_9 => {
+            const current: usize = @intCast(@intFromEnum(key) - @intFromEnum(rl.KeyboardKey.kp_0));
+            self.deslocationAcc = self.deslocationAcc *% 10 +% current;
+        },
+        else => {},
+    }
+}
 // rotaciona a face
 fn faceRotate(self: *RubikCube, face: CubeColor, clockwise: bool) !void {
     const cf = self.cube.items[@intFromEnum(face)];
