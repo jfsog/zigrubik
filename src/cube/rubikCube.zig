@@ -156,7 +156,6 @@ pub fn processInput(self: *RubikCube) !void {
             .b => try self.faceRotate(.Green, clockwise),
             .u => try self.faceRotate(.Orange, clockwise),
             .d => try self.faceRotate(.Red, clockwise),
-            //todo implementar rotações centrais
             .h => try self.rotateHorizontalMiddleLayer(clockwise),
             .v => try self.rotateVerticalMiddleLayer(clockwise),
             .s => try self.rotateSideMiddleLayer(clockwise),
