@@ -5,6 +5,7 @@ alloc: std.mem.Allocator = undefined,
 cube: std.ArrayList([]CubeColor) = undefined,
 neighbors: []Neighbors = undefined,
 size: usize,
+deslocationAcc: usize,
 
 pub const RubikCube = @This();
 
@@ -49,6 +50,7 @@ pub fn Init(allocator: std.mem.Allocator, size: usize) !RubikCube {
         .cube = try std.ArrayList([]CubeColor).initCapacity(allocator, 6),
         // 6 faces com 4 vizinhos
         .neighbors = try allocator.alloc(Neighbors, 6 * 4),
+        .deslocationAcc = 0,
     };
     const l = @typeInfo(CubeColor).@"enum".fields.len;
     for (0..l) |i| {
@@ -155,12 +157,18 @@ pub fn processInput(self: *RubikCube) !void {
             .u => try self.faceRotate(.Orange, clockwise),
             .d => try self.faceRotate(.Red, clockwise),
             //todo implementar rotações centrais
-            .h => try self.rotateHorizontalMiddleLayer(clockwise, 1),
-            .v => try self.rotateVerticalMiddleLayer(clockwise, 1),
-            .s => try self.rotateSideMiddleLayer(clockwise, 99),
+            .h => try self.rotateHorizontalMiddleLayer(clockwise),
+            .v => try self.rotateVerticalMiddleLayer(clockwise),
+            .s => try self.rotateSideMiddleLayer(clockwise),
             // numeric keys to implement middle layer rotations
-            .zero, .one, .two, .three, .four, .five, .six, .seven, .eight, .nine => {},
-            .kp_0, .kp_1, .kp_2, .kp_3, .kp_4, .kp_5, .kp_6, .kp_7, .kp_8, .kp_9 => {},
+            .zero, .one, .two, .three, .four, .five, .six, .seven, .eight, .nine => {
+                const current: usize = @intCast(@intFromEnum(key) - @intFromEnum(rl.KeyboardKey.zero));
+                self.deslocationAcc = self.deslocationAcc *% 10 +% current;
+            },
+            .kp_0, .kp_1, .kp_2, .kp_3, .kp_4, .kp_5, .kp_6, .kp_7, .kp_8, .kp_9 => {
+                const current: usize = @intCast(@intFromEnum(key) - @intFromEnum(rl.KeyboardKey.kp_0));
+                self.deslocationAcc = self.deslocationAcc *% 10 +% current;
+            },
             else => {},
         }
     }
@@ -194,13 +202,13 @@ fn faceRotate(self: *RubikCube, face: CubeColor, clockwise: bool) !void {
     try self.rotateLayers(self.getNeighbors(face), clockwise);
 }
 
-fn rotateHorizontalMiddleLayer(self: *RubikCube, clockwise: bool, deslocation: usize) !void {
+fn rotateHorizontalMiddleLayer(self: *RubikCube, clockwise: bool) !void {
     if (self.size <= 2) {
         return;
     }
     // clamp para garantir que deslocation esteja dentro dos limites das camadas centrais
     // deslocation deve ser >= 1 e <= size - 2
-    const middleLayer: usize = clampMiddleLayer(self, deslocation);
+    const middleLayer: usize = self.clampMiddleLayer();
     const sIndex: i64 = @intCast(middleLayer * self.size);
     var middleLayers: [4]Neighbors = undefined;
     inline for (&.{ .White, .Blue, .Yellow, .Green }, 0..) |color, i| {
@@ -210,11 +218,11 @@ fn rotateHorizontalMiddleLayer(self: *RubikCube, clockwise: bool, deslocation: u
     try self.rotateLayers(&middleLayers, clockwise);
 }
 
-fn rotateVerticalMiddleLayer(self: *RubikCube, clockwise: bool, deslocation: usize) !void {
+fn rotateVerticalMiddleLayer(self: *RubikCube, clockwise: bool) !void {
     if (self.size <= 2) {
         return;
     }
-    const sIndex: i64 = @intCast(clampMiddleLayer(self, deslocation));
+    const sIndex: i64 = @intCast(self.clampMiddleLayer());
     const N: i64 = @intCast(self.size);
     var middleLayers = [_]Neighbors{
         //camadas centrais laterais (em relação à camada branca)
@@ -226,11 +234,11 @@ fn rotateVerticalMiddleLayer(self: *RubikCube, clockwise: bool, deslocation: usi
     try self.rotateLayers(&middleLayers, clockwise);
 }
 
-fn rotateSideMiddleLayer(self: *RubikCube, clockwise: bool, deslocation: usize) !void {
+fn rotateSideMiddleLayer(self: *RubikCube, clockwise: bool) !void {
     if (self.size <= 2) {
         return;
     }
-    const sIndex: i64 = @intCast(clampMiddleLayer(self, deslocation));
+    const sIndex: i64 = @intCast(self.clampMiddleLayer());
     const N: i64 = @intCast(self.size);
     var middleLayers = [_]Neighbors{
         //camadas centrais laterais (em relação à camada azul)
@@ -252,6 +260,7 @@ fn rotateLayers(self: *RubikCube, neighbors: []const Neighbors, clockwise: bool)
         try self.swapNeighbor(&neighbors[1], &neighbors[2]);
         try self.swapNeighbor(&neighbors[2], &neighbors[3]);
     }
+    self.deslocationAcc = 0;
 }
 
 //rotaciona os vizinhos
@@ -267,6 +276,6 @@ fn swapNeighbor(self: *RubikCube, n1: *const Neighbors, n2: *const Neighbors) !v
     }
 }
 
-fn clampMiddleLayer(self: *RubikCube, deslocation: usize) usize {
-    return if (deslocation == 0) self.size / 2 else std.math.clamp(deslocation, 1, self.size - 2);
+fn clampMiddleLayer(self: *RubikCube) usize {
+    return if (self.deslocationAcc == 0) self.size / 2 else std.math.clamp(self.deslocationAcc, 1, self.size - 2);
 }
