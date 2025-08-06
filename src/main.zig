@@ -19,7 +19,7 @@ pub fn main() !void {
         rl.beginDrawing();
         defer rl.endDrawing();
         rl.clearBackground(.gray);
-        try cube.processInput();
+        cube.processInput();
         try cube.draw2d();
     }
 }
