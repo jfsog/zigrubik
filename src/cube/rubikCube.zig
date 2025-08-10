@@ -136,7 +136,7 @@ pub fn deinit(self: *RubikCube) void {
     }
 }
 
-pub fn draw2d(self: RubikCube) !void {
+pub fn draw2d(self: RubikCube) void {
     const sw: usize = @intCast(rl.getScreenWidth());
     const sh: usize = @intCast(rl.getScreenHeight());
     const my: usize = @divExact(sh, 2);
@@ -168,12 +168,71 @@ pub fn draw2d(self: RubikCube) !void {
     }
 }
 
+pub fn draw3d(self: *RubikCube) void {
+    const sw: usize = @intCast(rl.getScreenWidth());
+    const sh: usize = @intCast(rl.getScreenHeight());
+    //_ = self;
+
+    //todo draw rectangle with angle
+    // len
+    const fsw: f32 = @floatFromInt(sw / 2);
+    const fsh: f32 = @floatFromInt(sh / 2);
+    //const p1 = rl.Vector2.init(fsw - 100, fsh - 100);
+    //const p2 = rl.Vector2.init(fsw - 100, fsh + 100);
+    //const p3 = rl.Vector2.init(fsw + 100, fsh - 100);
+    //const p4 = rl.Vector2.init(fsw + 100, fsh + 100);
+
+    // Desenhar o trapezoide usando dois triângulos
+    //rl.drawTriangle(p1, p2, p3, rl.Color.green);
+    //rl.drawTriangle(p2, p4, p3, rl.Color.green);
+
+    //rl.drawLineEx(
+    //    p1,
+    //    p2,
+    //    5,
+    //    rl.Color.black,
+    //);
+    //rl.drawLineEx(p2, p4, 5, rl.Color.black);
+    //rl.drawLineEx(p4, p3, 5, rl.Color.black);
+    //rl.drawLineEx(p3, p1, 5, rl.Color.black);
+    const fsize: f32 = @floatFromInt(self.size);
+    const center = rl.Vector2.init(fsw, fsh);
+    const N: f32 = @as(f32, @min(fsw, fsh)) / (@as(f32, fsize) * 3);
+
+    const N3 = N * fsize;
+    const ar = [_]rl.Color{ rl.Color.yellow, rl.Color.black, rl.Color.red };
+    for (0..3) |i| {
+        const theta: f32 = std.math.degreesToRadians(210 + 120.0 * @as(f32, @floatFromInt(i)));
+        const dest = rl.Vector2.init(center.x + N3 * @cos(theta), center.y + N3 * @sin(theta));
+        rl.drawLineEx(center, dest, 5, ar[i]);
+    }
+}
+
 pub fn processInput(self: *RubikCube) void {
     const clockwise: bool = !rl.isKeyDown(rl.KeyboardKey.left_shift);
     var key: rl.KeyboardKey = rl.getKeyPressed();
     while (key != .null) : (key = rl.getKeyPressed()) {
         self.processKey(key, clockwise);
     }
+}
+
+fn drawTrapezoid(self: RubikCube) void {
+    _ = self;
+    // len
+    const p1 = rl.Vector2.init(100, 100);
+    const p2 = rl.Vector2.init(200, 100);
+    const p3 = rl.Vector2.init(200, 200);
+    const p4 = rl.Vector2.init(100, 200);
+
+    // Desenhar o trapezoide usando dois triângulos
+    rl.drawTriangle(p1, p2, p3, rl.Color.red);
+    rl.drawTriangle(p1, p3, p4, rl.Color.green);
+    //
+    ////// Opcional: desenhar contorno
+    //rl.drawLineV(p1, p2, rl.Color.black);
+    //rl.drawLineV(p2, p3, rl.Color.black);
+    //rl.drawLineV(p3, p4, rl.Color.black);
+    //rl.drawLineV(p4, p1, rl.Color.black);
 }
 
 fn processKey(self: *RubikCube, key: rl.KeyboardKey, clockwise: bool) void {
@@ -204,7 +263,7 @@ fn processKey(self: *RubikCube, key: rl.KeyboardKey, clockwise: bool) void {
 fn faceRotate(self: *RubikCube, face: CubeColor, clockwise: bool) void {
     const cf = self.cube.items[@intFromEnum(face)];
     const buffer: []CubeColor = self.alloc.dupe(CubeColor, cf) catch |err| {
-        std.debug.print("error: {any}", .{err});
+        std.debug.panic("erro: {error}", .{err});
         return;
     };
 
