@@ -11,15 +11,14 @@ pub fn main() !void {
     rl.initWindow(screenWidth, screenHeight, "rubik - Zig + raylib");
     defer rl.closeWindow(); // Close window and OpenGL context
 
-    rl.setTargetFPS(30); // Set our game to run at 60 frames-per-second
+    rl.setTargetFPS(30);
     //--------------------------------------------------------------------------------------
     var cube = try rc.Init(alloc, 5);
-    // defer cube.deinit(); // Deinitialize the cube when done
+    defer cube.deinit();
     while (!rl.windowShouldClose()) { // Detect window close button or ESC key
         rl.beginDrawing();
         defer rl.endDrawing();
         rl.clearBackground(.gray);
-        cube.processInput();
-        try cube.draw2d();
+        cube.renderCube();
     }
 }
