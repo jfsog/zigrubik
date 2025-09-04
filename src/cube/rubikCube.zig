@@ -229,7 +229,6 @@ fn draw3d(self: *RubikCube) void {
             drawSurfaceWithWires(-hs - d2, s1 + d1, s2 - d1, color, .Y_Z);
         }
     }
-    rl.drawGrid(@intCast(self.size + 1), 1.0);
     rl.endMode3D();
     self.drawCoodinates();
 }
