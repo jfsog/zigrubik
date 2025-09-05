@@ -222,7 +222,7 @@ fn draw3d(self: *RubikCube) void {
             drawSurfaceWithWires(hs + d2, s1 + d1, s2 - d1, color, .Y_Z);
             // 3 "back" faces
             color = self.cube.items[@intFromEnum(CubeColor.Green)][self.size * i + self.size - 1 - j].getColor();
-            drawSurfaceWithWires(s1 + d1, s2 - d1, -hs, color, .X_Y);
+            drawSurfaceWithWires(s1 + d1, s2 - d1, -hs - d2, color, .X_Y);
             color = self.cube.items[@intFromEnum(CubeColor.Red)][self.size * i + j].getColor();
             drawSurfaceWithWires(s1 + d1, -hs - d2, s2 - d1, color, .X_Z);
             color = self.cube.items[@intFromEnum(CubeColor.White)][self.size * (self.size - 1 - j) + (self.size - 1 - i)].getColor();
